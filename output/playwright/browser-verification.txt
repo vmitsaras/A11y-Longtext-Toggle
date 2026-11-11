@@ -1,0 +1,156 @@
+### Result
+{"status":"PASS","count":53,"checks":["One h1 and one consolidated page","All in-page links resolve","Line preview initializes collapsed","Line preview is visually clamped","Enter expands native button","State readout follows toggle","Focus remains on expanded button","Space collapses native button","Collapsed button keeps visible keyboard focus","Short content has no unnecessary toggle","Item mode preserves two complete items per list","Item expansion reveals every list item","Collapsed split link is hidden","Split region uses native hidden","Expanded split link joins native tab order","Split link disappears on keyboard collapse","Wide container shows complete content","Slider Home activates narrow container preview","Width output follows the slider","Slider End restores full wide content","Expanded choice survives container changes","Collapsed choice survives container changes","Responsive toggle receives focus before widening","Responsive deactivation waits for focused toggle","Responsive deactivation finishes after focus leaves","Narrowing preserves focus inside the split remainder","Deferred split collapse completes on leaving content","Opening native details measures the height preview","Height mode clamps overflowing content","Viewport example inactive above breakpoint","Viewport example retains expanded choice","Copy control copies its complete HTML example","Clipboard success is reported","Clipboard failure provides recovery","No page overflow at 320px","No page overflow at 375px","No page overflow at 390px","No page overflow at 640px","No page overflow at 768px","No page overflow at 1024px","No page overflow at 1440px","Print reveals collapsed split content","Print reveals collapsed list items","Forced colors retains a focus outline","No JavaScript: split remainder and link readable","No JavaScript: every list item readable","No JavaScript: long description unclipped","No JavaScript: native details reveals delivery text","No JavaScript: slider stays disabled","No JavaScript: inactive copy controls hidden","No JavaScript: narrow page has no overflow","Source page imports and initializes built package","No browser JavaScript errors"],"errors":[]}
+### Ran Playwright code
+```js
+await (async (page) => {
+  const checks = [];
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const check = (condition, label) => { if (!condition) throw new Error(label); checks.push(label); };
+  const settle = () => page.evaluate(async () => { for (let i = 0; i < 4; i++) await new Promise(requestAnimationFrame); });
+  const button = (id) => page.locator(`button[data-target="${id}"]`);
+  const expanded = (id) => button(id).getAttribute('aria-expanded');
+
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.goto('http://127.0.0.1:4187/docs/');
+  await page.waitForSelector('[data-demo-state]:not([hidden])');
+  check(await page.locator('h1').count() === 1, 'One h1 and one consolidated page');
+  check(await page.evaluate(() => [...document.querySelectorAll('a[href^="#"]')].every((a) => document.getElementById(a.hash.slice(1)))), 'All in-page links resolve');
+  check(await expanded('description') === 'false', 'Line preview initializes collapsed');
+  check(await page.locator('#description').evaluate((el) => el.clientHeight < el.scrollHeight), 'Line preview is visually clamped');
+  await button('description').focus();
+  await page.keyboard.press('Enter');
+  check(await expanded('description') === 'true', 'Enter expands native button');
+  check(await page.locator('[data-expanded-value]').textContent() === 'true', 'State readout follows toggle');
+  check(await button('description').evaluate((el) => document.activeElement === el), 'Focus remains on expanded button');
+  await page.keyboard.press('Space');
+  check(await expanded('description') === 'false', 'Space collapses native button');
+  check(await button('description').evaluate((el) => document.activeElement === el && getComputedStyle(el).outlineStyle !== 'none'), 'Collapsed button keeps visible keyboard focus');
+  check(await button('care').isHidden(), 'Short content has no unnecessary toggle');
+
+  const visibleItems = () => page.locator('#packing-checklist').evaluate((el) => [...el.querySelectorAll('ol, ul')].map((list) => [...list.children].filter((li) => getComputedStyle(li).display !== 'none').length));
+  check(JSON.stringify(await visibleItems()) === '[2,2]', 'Item mode preserves two complete items per list');
+  await button('packing-checklist').click();
+  check(JSON.stringify(await visibleItems()) === '[4,3]', 'Item expansion reveals every list item');
+  await button('packing-checklist').click();
+
+  const splitLink = page.locator('#materials-description a');
+  check(await splitLink.isHidden(), 'Collapsed split link is hidden');
+  check(await splitLink.evaluate((el) => el.closest('[data-a11y-long-text-more]').hidden), 'Split region uses native hidden');
+  await button('materials-description').click();
+  await page.keyboard.press('Shift+Tab');
+  check(await splitLink.evaluate((el) => document.activeElement === el), 'Expanded split link joins native tab order');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Space');
+  check(await splitLink.isHidden(), 'Split link disappears on keyboard collapse');
+
+  const slider = page.locator('#container-width');
+  check(await button('container-description').isHidden(), 'Wide container shows complete content');
+  await slider.focus();
+  await page.keyboard.press('Home');
+  await settle();
+  check(await expanded('container-description') === 'false' && await button('container-description').isVisible(), 'Slider Home activates narrow container preview');
+  check(await page.locator('#container-width-value').textContent() === '240 px', 'Width output follows the slider');
+  await button('container-description').click();
+  await slider.focus();
+  await page.keyboard.press('End');
+  await settle();
+  check(await button('container-description').isHidden(), 'Slider End restores full wide content');
+  await page.keyboard.press('Home');
+  await settle();
+  check(await expanded('container-description') === 'true', 'Expanded choice survives container changes');
+  await button('container-description').click();
+  await slider.focus();
+  await page.keyboard.press('End');
+  await settle();
+  await page.keyboard.press('Home');
+  await settle();
+  check(await expanded('container-description') === 'false', 'Collapsed choice survives container changes');
+  await page.keyboard.press('End');
+  await settle();
+  await page.setViewportSize({ width: 600, height: 900 });
+  await settle();
+  await button('container-description').waitFor({ state: 'visible' });
+  await button('container-description').focus();
+  check(await button('container-description').evaluate((el) => document.activeElement === el), 'Responsive toggle receives focus before widening');
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await settle();
+  check(await button('container-description').isVisible(), 'Responsive deactivation waits for focused toggle');
+  await page.keyboard.press('Tab');
+  await settle();
+  check(await button('container-description').isHidden(), 'Responsive deactivation finishes after focus leaves');
+  const repairLink = page.locator('#container-description a');
+  await repairLink.focus();
+  await page.setViewportSize({ width: 600, height: 900 });
+  await settle();
+  check(await repairLink.isVisible() && await repairLink.evaluate((el) => document.activeElement === el), 'Narrowing preserves focus inside the split remainder');
+  await page.locator('summary').first().focus();
+  await settle();
+  check(await repairLink.isHidden(), 'Deferred split collapse completes on leaving content');
+
+  await page.getByText('Also try a height preview at a viewport breakpoint', { exact: false }).click();
+  await settle();
+  check(await button('viewport-description').isVisible(), 'Opening native details measures the height preview');
+  check(await page.locator('#viewport-description').evaluate((el) => el.clientHeight < el.scrollHeight), 'Height mode clamps overflowing content');
+  await button('viewport-description').focus();
+  await page.keyboard.press('Enter');
+  await page.locator('summary').first().focus();
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await settle();
+  check(await button('viewport-description').isHidden(), 'Viewport example inactive above breakpoint');
+  await page.setViewportSize({ width: 600, height: 900 });
+  await settle();
+  check(await expanded('viewport-description') === 'true', 'Viewport example retains expanded choice');
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: 'Copy Minimal HTML example', exact: true }).click();
+  check(await page.evaluate(() => navigator.clipboard.readText()) === await page.locator('#markup-code').textContent(), 'Copy control copies its complete HTML example');
+  check(await page.locator('[data-copy-status]').textContent() === 'Code copied to the clipboard.', 'Clipboard success is reported');
+  await page.evaluate(() => Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async () => { throw new Error('Permission denied for test'); } }));
+  await page.getByRole('button', { name: 'Copy Local installation command', exact: true }).click();
+  check((await page.locator('[data-copy-status]').textContent()).includes('Select and copy'), 'Clipboard failure provides recovery');
+
+  const widths = [320, 375, 390, 640, 768, 1024, 1440];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await settle();
+    check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No page overflow at ${width}px`);
+  }
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.screenshot({ path: 'output/playwright/mobile.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.emulateMedia({ media: 'print' });
+  check(await page.locator('#materials-description [data-a11y-long-text-more]').isVisible(), 'Print reveals collapsed split content');
+  check(JSON.stringify(await visibleItems()) === '[4,3]', 'Print reveals collapsed list items');
+  await page.emulateMedia({ media: 'screen' });
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  await button('description').focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  check(await button('description').evaluate((el) => getComputedStyle(el).outlineStyle !== 'none'), 'Forced colors retains a focus outline');
+  await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'no-preference' });
+  await page.evaluate(() => { document.querySelector('details').open = false; scrollTo(0, 0); });
+  await page.screenshot({ path: 'output/playwright/desktop-full.png', fullPage: true });
+
+  const nojs = await page.context().browser().newContext({ javaScriptEnabled: false, viewport: { width: 375, height: 900 } });
+  const fallback = await nojs.newPage();
+  await fallback.goto('http://127.0.0.1:4187/docs/');
+  await fallback.locator('summary').first().click();
+  check(await fallback.locator('#materials-description a').isVisible(), 'No JavaScript: split remainder and link readable');
+  check(await fallback.locator('#packing-checklist li:visible').count() === 7, 'No JavaScript: every list item readable');
+  check(await fallback.locator('#description').evaluate((el) => el.clientHeight >= el.scrollHeight - 1), 'No JavaScript: long description unclipped');
+  check(await fallback.locator('#viewport-description').isVisible(), 'No JavaScript: native details reveals delivery text');
+  check(await fallback.locator('#container-width').isDisabled(), 'No JavaScript: slider stays disabled');
+  check(await fallback.locator('[data-copy]:visible').count() === 0, 'No JavaScript: inactive copy controls hidden');
+  check(await fallback.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No JavaScript: narrow page has no overflow');
+  await nojs.close();
+
+  await page.goto('http://127.0.0.1:4187/examples/');
+  await page.waitForSelector('[data-demo-state]:not([hidden])');
+  check(await expanded('description') === 'false', 'Source page imports and initializes built package');
+  check(errors.length === 0, 'No browser JavaScript errors');
+  return { status: 'PASS', count: checks.length, checks, errors };
+}
+)(page);
+```

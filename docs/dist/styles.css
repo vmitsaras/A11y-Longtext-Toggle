@@ -1,0 +1,87 @@
+.a11y-long-text {
+  --a11y-long-text-collapsed-lines: 3;
+  --a11y-long-text-collapsed-height: 8rem;
+  --a11y-long-text-fade-height: 2.5rem;
+  --a11y-long-text-fade-from: rgb(255 255 255 / 0);
+  --a11y-long-text-fade-to: Canvas;
+  position: relative;
+}
+
+.a11y-long-text--collapsed {
+  overflow: hidden;
+  overflow: clip;
+}
+
+.a11y-long-text--expanded {
+  overflow: visible;
+}
+
+.a11y-long-text[data-a11y-long-text-mode='split'].a11y-long-text--collapsed {
+  overflow: visible;
+}
+
+.a11y-long-text[data-a11y-long-text-mode='split'] [data-a11y-long-text-more][hidden] {
+  display: none !important;
+}
+
+.a11y-long-text[data-a11y-long-text-mode='lines'].a11y-long-text--collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--a11y-long-text-collapsed-lines);
+  line-clamp: var(--a11y-long-text-collapsed-lines);
+}
+
+.a11y-long-text[data-a11y-long-text-mode='height'].a11y-long-text--collapsed {
+  max-height: var(--a11y-long-text-collapsed-height);
+}
+
+.a11y-long-text[data-a11y-long-text-mode='items'].a11y-long-text--collapsed {
+  max-height: none;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+
+.a11y-long-text[data-a11y-long-text-mode='items'] .a11y-long-text__item--collapsed {
+  display: none !important;
+}
+
+.a11y-long-text.a11y-long-text__fade.a11y-long-text--collapsed::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: var(--a11y-long-text-fade-height);
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--a11y-long-text-fade-from), var(--a11y-long-text-fade-to));
+}
+
+@media (forced-colors: active) {
+  .a11y-long-text.a11y-long-text__fade.a11y-long-text--collapsed::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .a11y-long-text {
+    transition: none;
+  }
+}
+
+@media print {
+  .a11y-long-text {
+    overflow: visible !important;
+    max-height: none !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    display: block !important;
+  }
+
+  .a11y-long-text[data-a11y-long-text-mode='split'] [data-a11y-long-text-more][hidden] {
+    display: block !important;
+  }
+
+  .a11y-long-text[data-a11y-long-text-mode='items'] .a11y-long-text__item--collapsed {
+    display: list-item !important;
+  }
+}
